@@ -11,11 +11,12 @@ import java.io.InputStream;
 import javax.swing.*;
 
 public class FileWindow extends JFrame implements ActionListener,Runnable {
-    Thread compiler = null;
-    Thread runProm = null;
-    boolean bn = true;
+    Thread compiler;
+    Thread runProm;
+//    boolean bn = true;
     CardLayout mycard;
-    File file_saved = null;
+
+    File fileSaved = null;
     JButton buttonInputTxt,
             buttonCompilerText,
             buttonCompiler,
@@ -61,19 +62,14 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
         p1.add(buttonRunProm);
         add(p1,"North");
 
-        // 设置坐标，窗口大小，可见度
-//        setLocation(400,200);
-//        setSize(500,400);
-//        setVisible(true);
-//        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
         // 定义事件
+        // 将自身当作监视器，在自身内部实现actionPerformed()方法
+        // 将自身当为监视器的原因：对组件的响应牵扯到其他组件的展示状态
         buttonInputTxt.addActionListener(this);
         buttonCompiler.addActionListener(this);
         buttonCompilerText.addActionListener(this);
         buttonRunProm.addActionListener(this);
         buttonSeeDoswin.addActionListener(this);
-
     }
 
     @Override
@@ -82,43 +78,43 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
         if(Thread.currentThread()==compiler)
         {
             compilerText.setText(null);
+            // trim()方法用来去除空白字符
             String temp=inputText.getText().trim();
+            // 转化为码点char类型
             byte [] buffer=temp.getBytes();
-            int b=buffer.length;
-            String file_name=null;
-            file_name=inputFileNameText.getText().trim();
+            // 获取文件名字
+            String fileName = inputFileNameText.getText().trim();
 
             try {
-                file_saved=new File(file_name);
-                FileOutputStream writefile=null;
-                writefile=new FileOutputStream(file_saved);
-                writefile.write(buffer, 0, b);
-                writefile.close();
+                // 新建并写入文件
+                fileSaved=new File(fileName);
+                FileOutputStream writeFile;
+                writeFile=new FileOutputStream(fileSaved);
+                writeFile.write(buffer, 0, buffer.length);
+                writeFile.close();
             } catch (Exception e) {
                 // TODO: handle exception
                 System.out.println("ERROR");
             }
             try {
-
-                //获得该进程的错误流，才可以知道运行结果到底是失败了还是成功。
+                // 获得该进程的错误流，才可以知道运行结果到底是失败了还是成功。
                 Runtime rt=Runtime.getRuntime();
-                InputStream in=rt.exec("javac "+file_name).getErrorStream(); //通过Runtime调用javac命令。注意：“javac ”这个字符串是有一个空格的！！
+                // 通过Runtime调用javac命令。注意：“javac ”这个字符串是有一个空格的！！
+                InputStream in=rt.exec("javac "+fileName).getErrorStream();
 
                 BufferedInputStream bufIn=new BufferedInputStream(in);
 
-                byte[] shuzu=new byte[100];
-                int n=0;
+                byte[] errorText=new byte[100];
+                int n;
                 boolean flag=true;
 
-                //输入错误信息
-                while((n=bufIn.read(shuzu, 0,shuzu.length))!=-1)
-                {
-                    String s=null;
-                    s=new String(shuzu,0,n);
+                // 从错误流中获取信息并写进complierText组件, 0为偏移量
+                while((n=bufIn.read(errorText, 0,errorText.length))!=-1) {
+                    String s;
+                    s=new String(errorText,0,n);
                     compilerText.append(s);
-                    if(s!=null)
-                    {
-                        flag=false;
+                    if(s==null) {
+                        flag = false;
                     }
                 }
                 //判断是否编译成功
@@ -133,7 +129,6 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
         else if(Thread.currentThread()==runProm)
         {
             //运行文件，并将结果输出到dos_out_text
-
             dosOutText.setText(null);
 
             try {
@@ -152,16 +147,16 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
                 int m=0;
                 @SuppressWarnings("unused")
                 int i=0;
-                String s=null;
-                String err=null;
+                String s;
+                String err;
 
                 //打印编译信息及错误信息
-                while((m=bisIn.read(buf, 0, 150))!=-1)
+                while(bisIn.read(buf, 0, 150)!=-1)
                 {
                     s=new String(buf,0,150);
                     dosOutText.append(s);
                 }
-                while((i=bisErr.read(err_buf))!=-1)
+                while(bisErr.read(err_buf)!=-1)
                 {
                     err=new String(err_buf,0,150);
                     dosOutText.append(err);
