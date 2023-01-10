@@ -16,8 +16,7 @@ public class Main {
             }
         });
         //设置窗口大小
-        inter.setBounds(200, 180,550,360);
+        inter.setBounds(200, 180, 550, 360);
         inter.setVisible(true);
-
     }
 }

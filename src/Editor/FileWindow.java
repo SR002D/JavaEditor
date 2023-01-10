@@ -14,14 +14,14 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
     Thread compiler;
     Thread runProm;
 //    boolean bn = true;
-    CardLayout mycard;
+    CardLayout card;
 
     File fileSaved = null;
     JButton buttonInputTxt,
             buttonCompilerText,
             buttonCompiler,
             buttonRunProm,
-            buttonSeeDoswin;
+            buttonSeeResult;
     JPanel p = new JPanel();
     JTextArea inputText = new JTextArea();      // 程序输入区
     JTextArea compilerText = new JTextArea();   // 编译错误显示区
@@ -31,16 +31,16 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
 
     public FileWindow() {
         super("Java语言编译器");
-        mycard = new CardLayout();
+        card = new CardLayout();
         compiler = new Thread(this);
         runProm = new Thread(this);
         buttonInputTxt = new JButton("程序输入区(白色)");
         buttonCompilerText = new JButton("编译结果区(粉红色)");
-        buttonSeeDoswin = new JButton("程序运行结果(浅蓝色)");
+        buttonSeeResult = new JButton("程序运行结果(浅蓝色)");
         buttonCompiler = new JButton("编译程序");
         buttonRunProm = new JButton("运行程序");
         // 设置卡片面板
-        p.setLayout(mycard);
+        p.setLayout(card);
         p.add("input", inputText);
         p.add("compiler",compilerText);
         p.add("dos",dosOutText);
@@ -53,7 +53,7 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
         p1.setLayout(new GridLayout(3,3));
         p1.add(buttonInputTxt);
         p1.add(buttonCompilerText);
-        p1.add(buttonSeeDoswin);
+        p1.add(buttonSeeResult);
         p1.add(new JLabel("输入编译文件名(.java):"));
         p1.add(inputFileNameText);
         p1.add(buttonCompiler);
@@ -69,7 +69,7 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
         buttonCompiler.addActionListener(this);
         buttonCompilerText.addActionListener(this);
         buttonRunProm.addActionListener(this);
-        buttonSeeDoswin.addActionListener(this);
+        buttonSeeResult.addActionListener(this);
     }
 
     @Override
@@ -108,12 +108,13 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
                 int n;
                 boolean flag=true;
 
-                // 从错误流中获取信息并写进complierText组件, 0为偏移量
+                // 从错误流中获取信息并写进compilerText组件, 0为偏移量
                 while((n=bufIn.read(errorText, 0,errorText.length))!=-1) {
                     String s;
                     s=new String(errorText,0,n);
                     compilerText.append(s);
-                    if(s==null) {
+                    // 判断s为空
+                    if(s.equals("")) {
                         flag = false;
                     }
                 }
@@ -123,34 +124,31 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
                     compilerText.append("Compile Succeed!");
                 }
             } catch (Exception e) {
-                // TODO: handle exception
+                System.out.println("Error:" + e);
             }
         }
         else if(Thread.currentThread()==runProm)
         {
-            //运行文件，并将结果输出到dos_out_text
+            // 运行文件，并将结果输出到dos_out_text
             dosOutText.setText(null);
 
             try {
                 Runtime rt=Runtime.getRuntime();
                 String path=runFileNameText.getText().trim();
+                // 使用Process类来接收运行情况
                 Process stream=rt.exec("java "+path);//调用java命令
 
-                InputStream in=stream.getInputStream();
+                // 获取对应的输出流和错误流
                 BufferedInputStream bisErr=new BufferedInputStream(stream.getErrorStream());
-                BufferedInputStream bisIn=new BufferedInputStream(in);
+                BufferedInputStream bisIn=new BufferedInputStream(stream.getInputStream());
 
                 byte[] buf=new byte[150];
                 byte[] err_buf=new byte[150];
 
-                @SuppressWarnings("unused")
-                int m=0;
-                @SuppressWarnings("unused")
-                int i=0;
                 String s;
                 String err;
 
-                //打印编译信息及错误信息
+                // 打印编译信息及错误信息
                 while(bisIn.read(buf, 0, 150)!=-1)
                 {
                     s=new String(buf,0,150);
@@ -163,7 +161,7 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
                 }
             }
             catch (Exception e) {
-                // TODO: handle exception
+                System.out.println("Error:" + e);
             }
         }
     }
@@ -173,15 +171,15 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
     public void actionPerformed(ActionEvent e) {
         if(e.getSource()==buttonInputTxt) {
             //显示程序输入区
-            mycard.show(p,"input");
+            card.show(p,"input");
         }
         else if(e.getSource()==buttonCompilerText) {
             //显示编译结果显示区
-            mycard.show(p,"compiler");
+            card.show(p,"compiler");
         }
-        else if(e.getSource()==buttonSeeDoswin) {
+        else if(e.getSource()== buttonSeeResult) {
             //显示程序运行结果区
-            mycard.show(p,"dos");
+            card.show(p,"dos");
         }
         else if(e.getSource()==buttonCompiler) {
             //如果是编译按钮，执行编译文件的方法
@@ -192,11 +190,11 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
                 compiler.start();
 
             } catch (Exception e2) {
-                // TODO: handle exception
+                // System.out.println("Error:" + e2);
                 e2.printStackTrace();
             }
 
-            mycard.show(p,"compiler");
+            card.show(p,"compiler");
 
         }
         else if(e.getSource()==buttonRunProm) {
@@ -210,7 +208,7 @@ public class FileWindow extends JFrame implements ActionListener,Runnable {
                 // TODO: handle exception
                 e2.printStackTrace();
             }
-            mycard.show(p,"dos");
+            card.show(p,"dos");
         }
 
     }
